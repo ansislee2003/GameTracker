@@ -32,6 +32,8 @@ yarn-error.*
 
 # local env files
 .env*.local
+**/.env*
+nativewind-env.d.ts
 
 # typescript
 *.tsbuildinfo
@@ -41,3 +43,8 @@ app-example
 # generated native folders
 /ios
 /android
+
+# firebase
+functions/serviceAccountKey.json
+functions/firebase-debug.log
+FirebaseConfig.ts

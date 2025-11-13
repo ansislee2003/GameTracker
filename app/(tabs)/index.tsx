@@ -1,98 +1,146 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import {ActivityIndicator, FlatList, ScrollView, Text, View} from "react-native";
+import {Image} from "expo-image";
+import SearchBar from "@/components/SearchBar";
+import { useRouter } from "expo-router";
+import GameCard from "@/components/GameCard";
+import React, { useEffect, useState } from 'react';
+import axios from "axios";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const API_BASE_URL = 'https://api-idspf7h7kq-uc.a.run.app';
 
-export default function HomeScreen() {
+export default function Index() {
+    const router = useRouter();
+
+    const [topGames, setTopGames] = useState([]);
+    const [topGamesLoading, setTopGamesLoading] = useState(true);
+    const [topGamesError, setTopGamesError] = useState('');
+
+    const [trendingGames, setTrendingGames] = useState([]);
+    const [trendingGamesLoading, setTrendingGamesLoading] = useState(true);
+    const [trendingGamesError, setTrendingGamesError] = useState('');
+
+    const [topNewGames, setTopNewGames] = useState([]);
+    const [topNewGamesLoading, setTopNewGamesLoading] = useState(true);
+    const [topNewGamesError, setTopNewGamesError] = useState('');
+
+    useEffect(() => {
+        axios.post(`${API_BASE_URL}/getTopGames`)
+        .then(response => {
+            setTopGames(response.data);
+            setTopGamesLoading(false);
+        })
+        .catch(error => {
+            setTopGamesError(error);
+        })
+
+        axios.post(`${API_BASE_URL}/getTrendingGames`)
+        .then(response => {
+            setTrendingGames(response.data);
+            setTrendingGamesLoading(false);
+        })
+        .catch(error => {
+            setTrendingGamesError(error);
+        })
+
+        axios.post(`${API_BASE_URL}/getTopNewGames`)
+        .then(response => {
+            setTopNewGames(response.data);
+            setTopNewGamesLoading(false);
+        })
+        .catch(error => {
+            setTopNewGamesError(error);
+        })
+    }, []);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
+    <View className="flex-1 justify-center items-center bg-background">
+        <ScrollView
+            className="flex-1 px-5 w-full"
+            showsVerticalScrollIndicator={ true }
+            contentContainerStyle={{
+                minHeight: "100%",
+                alignItems: "center"
+            }}
+        >
+            <Image source={require('@/assets/images/logo.png')}
+                   className="mt-10"
+                   style={{ width: 50, height: 50, marginTop: 50 }}
             />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+            <View className="mt-5">
+                <SearchBar
+                    onPress={() => router.push("/search")}
+                    placeholder="Search"
+                    editable={false}
+                />
+            </View>
+
+            <View className="mt-5 w-full">
+                <Text className="text-primary text-lg font-medium">Trending Games</Text>
+                {!trendingGamesLoading ? (
+                    <FlatList
+                        className="mt-2 pb-4"
+                        data={ trendingGames }
+                        renderItem={({ item }) => (
+                            <GameCard
+                                {...item}
+                            />
+                        )}
+                        keyExtractor={(item) => item.id.toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        ItemSeparatorComponent={() => <View className="w-4" />}
+                    />
+                ) : (
+                    <View className="flex-1 my-10 py-10 align-middle">
+                        <ActivityIndicator size="large" color="#FDBA74" />
+                    </View>
+                )}
+
+                <Text className="text-primary text-lg font-medium">Best New Games</Text>
+                {!topNewGamesLoading ? (
+                    <FlatList
+                        className="mt-2 pb-4"
+                        data={ topNewGames }
+                        renderItem={({ item }) => (
+                            <GameCard
+                                {...item}
+                            />
+                        )}
+                        keyExtractor={(item) => item.id.toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        ItemSeparatorComponent={() => <View className="w-4" />}
+                    />
+                ) : (
+                <View className="flex-1 my-10 py-10 align-middle">
+                    <ActivityIndicator size="large" color="#FDBA74" />
+                </View>
+                )}
+
+                <Text className="text-primary text-lg font-medium">Top Rated Games</Text>
+                {!topGamesLoading ? (
+                    <FlatList
+                        className="mt-2 pb-4"
+                        data={ topGames }
+                        renderItem={({ item }) => (
+                            <GameCard
+                                {...item}
+                            />
+                        )}
+                        keyExtractor={(item) => item.id.toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        ItemSeparatorComponent={() => <View className="w-4" />}
+                    />
+                ) : (
+                    <View className="flex-1 my-10 py-10 align-middle">
+                        <ActivityIndicator size="large" color="#FDBA74" />
+                    </View>
+                )}
+            </View>
+
+        </ScrollView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
