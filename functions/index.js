@@ -129,6 +129,25 @@ api.interceptors.response.use(null, async error => {
     return Promise.reject(error);
 })
 
+app.use(async (req, res, next) => {
+    // check format and extract idToken
+    const authHeader = req.headers.authorization || "";
+    const idToken = authHeader.startsWith('Bearer ')
+        ? authHeader.split(" ")[1]
+        : null;
+
+    if (!idToken) {
+        return res.status(401).send('Not authorized: Missing token');
+    }
+
+    try {
+        req.user = await admin.auth().verifyIdToken(idToken);
+        next();
+    } catch (error) {
+        return res.status(401).send('Not authorized: Invalid token');
+    }
+})
+
 app.get('/hello', (req, res) => {
     res.send('Hello from Firebase!');
 });

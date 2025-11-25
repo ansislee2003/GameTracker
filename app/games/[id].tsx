@@ -3,10 +3,8 @@ import React, {useEffect, useState} from "react";
 import {useLocalSearchParams} from "expo-router";
 import {Image} from "expo-image";
 import StarIcon from "@/assets/icons/star.svg";
-import axios from "axios";
 import Animated from "react-native-reanimated";
-
-const API_BASE_URL = 'https://api-idspf7h7kq-uc.a.run.app';
+import api from "@/api"
 
 const GameDetails = () => {
     const { id } = useLocalSearchParams();
@@ -16,7 +14,7 @@ const GameDetails = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        axios.post(`${API_BASE_URL}/getGameById`, {"gameID": id},
+        api.post('/getGameById', {"gameID": id},
             {
                 headers: {
                     'Content-Type': 'application/json'

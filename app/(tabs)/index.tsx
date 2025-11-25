@@ -4,9 +4,9 @@ import SearchBar from "@/components/SearchBar";
 import { useRouter } from "expo-router";
 import GameCard from "@/components/GameCard";
 import React, { useEffect, useState } from 'react';
-import axios from "axios";
-
-const API_BASE_URL = 'https://api-idspf7h7kq-uc.a.run.app';
+import api from "@/api"
+import { auth } from "@/FirebaseConfig";
+import {onAuthStateChanged} from "firebase/auth";
 
 export default function Index() {
     const router = useRouter();
@@ -24,31 +24,38 @@ export default function Index() {
     const [topNewGamesError, setTopNewGamesError] = useState('');
 
     useEffect(() => {
-        axios.post(`${API_BASE_URL}/getTopGames`)
-        .then(response => {
-            setTopGames(response.data);
-            setTopGamesLoading(false);
-        })
-        .catch(error => {
-            setTopGamesError(error);
-        })
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                api.post('/getTopGames')
+                    .then(response => {
+                        setTopGames(response.data);
+                        setTopGamesLoading(false);
+                    })
+                    .catch(error => {
+                        setTopGamesError(error);
+                        console.log(error.message);
+                    })
 
-        axios.post(`${API_BASE_URL}/getTrendingGames`)
-        .then(response => {
-            setTrendingGames(response.data);
-            setTrendingGamesLoading(false);
-        })
-        .catch(error => {
-            setTrendingGamesError(error);
-        })
+                api.post('/getTrendingGames')
+                    .then(response => {
+                        setTrendingGames(response.data);
+                        setTrendingGamesLoading(false);
+                    })
+                    .catch(error => {
+                        setTrendingGamesError(error);
+                        console.log(error.message);
+                    })
 
-        axios.post(`${API_BASE_URL}/getTopNewGames`)
-        .then(response => {
-            setTopNewGames(response.data);
-            setTopNewGamesLoading(false);
-        })
-        .catch(error => {
-            setTopNewGamesError(error);
+                api.post('/getTopNewGames')
+                    .then(response => {
+                        setTopNewGames(response.data);
+                        setTopNewGamesLoading(false);
+                    })
+                    .catch(error => {
+                        setTopNewGamesError(error);
+                        console.log(error.message);
+                    })
+            }
         })
     }, []);
 

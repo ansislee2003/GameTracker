@@ -1,9 +1,22 @@
 import { Stack } from "expo-router";
 import './globals.css';
 import { Provider as PaperProvider } from 'react-native-paper';
+import { auth } from "@/FirebaseConfig";
+import {useEffect} from "react";
+import {signInAnonymously} from "@firebase/auth";
 
 export default function RootLayout() {
-  return (
+    useEffect(() => {
+        signInAnonymously(auth)
+        .then((user) => {
+            console.log("Signed in anonymously");
+        })
+        .catch((error) => {
+            console.log("Failed to sign in");
+        })
+    }, []);
+
+    return (
       <PaperProvider>
           <Stack
               screenOptions={{

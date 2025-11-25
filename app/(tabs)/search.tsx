@@ -15,8 +15,7 @@ import axios from "axios";
 import GameCard from "@/components/GameCard";
 import {Icon} from "react-native-paper/src";
 import Animated, {FadeInDown, FadeOutUp} from "react-native-reanimated";
-
-const API_BASE_URL = 'https://api-idspf7h7kq-uc.a.run.app';
+import api from "@/api"
 
 export default function Index() {
     const [searchText, setSearchText] = useState('');
@@ -27,7 +26,7 @@ export default function Index() {
     const currSearchText = useRef("");
 
     const getGamesByName = (searchTerm: string, isSearch: boolean, searchId: number) => {
-        axios.post(`${API_BASE_URL}/getGamesByName`,
+        api.post('/getGamesByName',
             {
                 "searchTerm": searchTerm,
                 "searchOffset": searchOffset.current,
