@@ -1,4 +1,4 @@
-import {ActivityIndicator, FlatList, ScrollView, Text, View} from "react-native";
+import {ActivityIndicator, FlatList, ImageBackground, ScrollView, Text, View} from "react-native";
 import {Image} from "expo-image";
 import SearchBar from "@/components/SearchBar";
 import { useRouter } from "expo-router";
@@ -53,94 +53,100 @@ export default function Index() {
     }, []);
 
   return (
-    <View className="flex-1 justify-center items-center bg-background">
-        <ScrollView
-            className="flex-1 px-5 w-full"
-            showsVerticalScrollIndicator={ true }
-            contentContainerStyle={{
-                minHeight: "100%",
-                alignItems: "center"
-            }}
-        >
-            <Image source={require('@/assets/images/logo.png')}
-                   className="mt-10"
-                   style={{ width: 50, height: 50, marginTop: 50 }}
-            />
-
-            <View className="mt-5">
-                <SearchBar
-                    onPress={() => router.push("/search")}
-                    placeholder="Search"
-                    editable={false}
+      <ImageBackground
+          source={require('@/assets/images/background.png')}
+          className="flex-1"
+          resizeMode="cover"
+      >
+        <View className="flex-1 justify-center items-center" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+            <ScrollView
+                className="flex-1 px-5 w-full"
+                showsVerticalScrollIndicator={ true }
+                contentContainerStyle={{
+                    minHeight: "100%",
+                    alignItems: "center"
+                }}
+            >
+                <Image source={require('@/assets/images/logo.png')}
+                       className="mt-10"
+                       style={{ width: 50, height: 50, marginTop: 50 }}
                 />
-            </View>
 
-            <View className="mt-5 w-full">
-                <Text className="text-primary text-lg font-medium">Trending Games</Text>
-                {!trendingGamesLoading ? (
-                    <FlatList
-                        className="mt-2 pb-4"
-                        data={ trendingGames }
-                        renderItem={({ item }) => (
-                            <GameCard
-                                {...item}
-                            />
-                        )}
-                        keyExtractor={(item) => item.id.toString()}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        ItemSeparatorComponent={() => <View className="w-4" />}
+                <View className="mt-5">
+                    <SearchBar
+                        onPress={() => router.push("/search")}
+                        placeholder="Search"
+                        editable={false}
                     />
-                ) : (
-                    <View className="flex-1 my-10 py-10 align-middle">
-                        <ActivityIndicator size="large" color="#FDBA74" />
-                    </View>
-                )}
-
-                <Text className="text-primary text-lg font-medium">Best New Games</Text>
-                {!topNewGamesLoading ? (
-                    <FlatList
-                        className="mt-2 pb-4"
-                        data={ topNewGames }
-                        renderItem={({ item }) => (
-                            <GameCard
-                                {...item}
-                            />
-                        )}
-                        keyExtractor={(item) => item.id.toString()}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        ItemSeparatorComponent={() => <View className="w-4" />}
-                    />
-                ) : (
-                <View className="flex-1 my-10 py-10 align-middle">
-                    <ActivityIndicator size="large" color="#FDBA74" />
                 </View>
-                )}
 
-                <Text className="text-primary text-lg font-medium">Top Rated Games</Text>
-                {!topGamesLoading ? (
-                    <FlatList
-                        className="mt-2 pb-4"
-                        data={ topGames }
-                        renderItem={({ item }) => (
-                            <GameCard
-                                {...item}
-                            />
-                        )}
-                        keyExtractor={(item) => item.id.toString()}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        ItemSeparatorComponent={() => <View className="w-4" />}
-                    />
-                ) : (
+                <View className="mt-5 w-full">
+                    <Text className="text-primary text-lg font-medium">Trending Games</Text>
+                    {!trendingGamesLoading ? (
+                        <FlatList
+                            className="mt-2 pb-4"
+                            data={ trendingGames }
+                            renderItem={({ item }) => (
+                                <GameCard
+                                    {...item}
+                                />
+                            )}
+                            keyExtractor={(item) => item.id.toString()}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            ItemSeparatorComponent={() => <View className="w-4" />}
+                        />
+                    ) : (
+                        <View className="flex-1 my-10 py-10 align-middle">
+                            <ActivityIndicator size="large" color="#FDBA74" />
+                        </View>
+                    )}
+
+                    <Text className="text-primary text-lg font-medium">Best New Games</Text>
+                    {!topNewGamesLoading ? (
+                        <FlatList
+                            className="mt-2 pb-4"
+                            data={ topNewGames }
+                            renderItem={({ item }) => (
+                                <GameCard
+                                    {...item}
+                                />
+                            )}
+                            keyExtractor={(item) => item.id.toString()}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            ItemSeparatorComponent={() => <View className="w-4" />}
+                        />
+                    ) : (
                     <View className="flex-1 my-10 py-10 align-middle">
                         <ActivityIndicator size="large" color="#FDBA74" />
                     </View>
-                )}
-            </View>
+                    )}
 
-        </ScrollView>
-    </View>
+                    <Text className="text-primary text-lg font-medium">Top Rated Games</Text>
+                    {!topGamesLoading ? (
+                        <FlatList
+                            className="mt-2 pb-4"
+                            data={ topGames }
+                            renderItem={({ item }) => (
+                                <GameCard
+                                    {...item}
+                                />
+                            )}
+                            keyExtractor={(item) => item.id.toString()}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            ItemSeparatorComponent={() => <View className="w-4" />}
+                        />
+                    ) : (
+                        <View className="flex-1 my-10 py-10 align-middle">
+                            <ActivityIndicator size="large" color="#FDBA74" />
+                        </View>
+                    )}
+                </View>
+
+            </ScrollView>
+        </View>
+      </ImageBackground>
   );
 }

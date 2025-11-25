@@ -1,9 +1,10 @@
-import {View, Text, ScrollView, ActivityIndicator} from 'react-native';
+import {View, Text, ScrollView, ActivityIndicator, ImageBackground} from 'react-native';
 import React, {useEffect, useState} from "react";
 import {useLocalSearchParams} from "expo-router";
 import {Image} from "expo-image";
 import StarIcon from "@/assets/icons/star.svg";
 import axios from "axios";
+import Animated from "react-native-reanimated";
 
 const API_BASE_URL = 'https://api-idspf7h7kq-uc.a.run.app';
 
@@ -33,11 +34,15 @@ const GameDetails = () => {
     }, []);
 
     if (!loading) {
-        console.log(game, `{gameID: ${id}}`);
         return (
-            <View className="flex-1 bg-background">
+            <ImageBackground
+                source={require('@/assets/images/background.png')}
+                className="flex-1"
+                resizeMode="cover"
+            >
+            <View className="flex-1" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
                 <ScrollView>
-                    <Image
+                    <Animated.Image
                         className="w-[300px] h-[300px]"
                         source={game.cover ? { uri: `https:${game.cover.url.replace('t_thumb', 't_original')}`}
                                 : require('@/assets/images/image-not-found.png')}
@@ -54,11 +59,11 @@ const GameDetails = () => {
                             <StarIcon width={16} height={16} color="#FFD700"/>
                             {game.total_rating ? (
                                     <>
-                                        <Text className="mr-2">{game.total_rating.toFixed(1)} / 100</Text>
-                                        <Text>({game.total_rating_count} votes)</Text>
+                                        <Text className="text-primary ml-1 mr-2">{game.total_rating.toFixed(1)} / 100</Text>
+                                        <Text className="text-primary">({game.total_rating_count} votes)</Text>
                                     </>
                             ): (
-                                <Text>N/A</Text>
+                                <Text className="text-primary">N/A</Text>
                             )}
                         </View>
                         <View className="flex-row flex-wrap gap-2 mb-3">
@@ -74,7 +79,7 @@ const GameDetails = () => {
                             )}
                         </View>
                         <View className="mb-3">
-                            <Text className="text-secondary font-medium mb-1">Story</Text>
+                            <Text className="text-primary font-medium mb-1">Story</Text>
                             <Text className="text-primary">
                                 {game.storyline ? (
                                     game.storyline.split('\n\n')[0]
@@ -82,7 +87,7 @@ const GameDetails = () => {
                             </Text>
                         </View>
                         <View className="mb-3">
-                            <Text className="text-secondary font-medium mb-1">Summary</Text>
+                            <Text className="text-primary font-medium mb-1">Summary</Text>
                             <Text className="text-primary">
                                 {game.summary ? (
                                     game.summary
@@ -90,7 +95,7 @@ const GameDetails = () => {
                             </Text>
                         </View>
                         <View className="mb-3">
-                            <Text className="text-secondary font-medium mb-1">Developers</Text>
+                            <Text className="text-primary font-medium mb-1">Developers</Text>
                             <Text className="text-primary">
                                 {game.involved_companies?.length ? (
                                     game.involved_companies.map(c => c.company.name).join(', ')
@@ -98,7 +103,7 @@ const GameDetails = () => {
                             </Text>
                         </View>
                         <View className="mb-3">
-                            <Text className="text-secondary font-medium mb-1">Available Platforms</Text>
+                            <Text className="text-primary font-medium mb-1">Available Platforms</Text>
                             <Text className="text-primary">
                                 {game.platforms?.length ? (
                                     game.platforms.map(p => p.name).join(', ')
@@ -109,13 +114,20 @@ const GameDetails = () => {
 
                 </ScrollView>
             </View>
+            </ImageBackground>
         )
     }
     else {
         return (
-            <View className="flex-1 bg-background items-center justify-center">
-                <ActivityIndicator size="large" color="#FDBA74" />
-            </View>
+            <ImageBackground
+                source={require('@/assets/images/background.png')}
+                className="flex-1"
+                resizeMode="cover"
+            >
+                <View className="flex-1 items-center justify-center" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+                    <ActivityIndicator size="large" color="#FDBA74" />
+                </View>
+            </ImageBackground>
         )
     }
 }

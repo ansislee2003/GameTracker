@@ -1,5 +1,9 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# IDE/editor configs
+.vscode/
+.idea/
+
 # dependencies
 node_modules/
 
@@ -47,4 +51,3 @@ app-example
 # firebase
 functions/serviceAccountKey.json
 functions/firebase-debug.log
-FirebaseConfig.ts

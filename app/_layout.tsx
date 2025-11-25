@@ -5,7 +5,13 @@ import { Provider as PaperProvider } from 'react-native-paper';
 export default function RootLayout() {
   return (
       <PaperProvider>
-          <Stack>
+          <Stack
+              screenOptions={{
+                  contentStyle: {
+                      backgroundColor: "#0e0c1f"
+                  }
+              }}
+          >
               <Stack.Screen
                   name="(tabs)"
                   options={{

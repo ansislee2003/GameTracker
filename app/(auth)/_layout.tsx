@@ -3,7 +3,13 @@ import React from "react";
 
 export default function AuthLayout() {
     return (
-        <Stack>
+        <Stack
+            screenOptions={{
+                contentStyle: {
+                    backgroundColor: "#0e0c1f"
+                }
+            }}
+        >
             <Stack.Screen
                 name="signup"
                 options={{
@@ -17,6 +23,17 @@ export default function AuthLayout() {
 
             <Stack.Screen
                 name="login"
+                options={{
+                    headerShown: false,
+                    headerTransparent: true,
+                    headerTitle: '',
+                    headerShadowVisible: false,
+                    headerBackButtonDisplayMode: 'minimal',
+                }}
+            />
+
+            <Stack.Screen
+                name="verify"
                 options={{
                     headerShown: false,
                     headerTransparent: true,

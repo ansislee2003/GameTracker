@@ -31,7 +31,9 @@ const _Layout = () => {
                 tabBarStyle: {
                     paddingTop: 10,
                     height: 75,
+                    backgroundColor: '#0e0c1f',
                 },
+                sceneStyle: {backgroundColor: '#0e0c1f'},
             }}
         >
             <Tabs.Screen
