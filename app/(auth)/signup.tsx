@@ -1,5 +1,5 @@
 import { auth } from "@/FirebaseConfig";
-import {signInWithEmailAndPassword, createUserWithEmailAndPassword, getAuth} from "firebase/auth";
+import {signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile} from "firebase/auth";
 import React, { useState } from "react";
 import {
     View,
@@ -72,7 +72,11 @@ export default function Index() {
         if (validate()) {
             console.log("Sign up!");
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
+                const newUserCred = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(newUserCred.user, {
+                    displayName: `New_User`,
+                    photoURL: require('@/assets/images/default_profile.png'),
+                });
                 router.replace('/verify');
             }
             catch (error: any) {

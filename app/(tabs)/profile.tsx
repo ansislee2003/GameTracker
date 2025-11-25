@@ -1,7 +1,9 @@
 import {ImageBackground, ScrollView, Text, View} from "react-native";
 import {Image} from "expo-image";
 import LinkText from "@/components/LinkText";
-import React from "react";
+import React, {useEffect, useState} from "react";
+import {onAuthStateChanged, User} from "firebase/auth";
+import {auth} from "@/FirebaseConfig";
 
  const user = {
     name: "John",
@@ -9,6 +11,16 @@ import React from "react";
  }
 
 export default function Index() {
+     const [user, setUser] = useState<User | null>(null);
+
+     useEffect(() => {
+        onAuthStateChanged(auth, () => {
+            if (auth.currentUser) {
+                setUser(auth.currentUser);
+            }
+        });
+    }, []);
+
     return (
         <ImageBackground
             source={require('@/assets/images/background.png')}
@@ -22,7 +34,7 @@ export default function Index() {
                             source={require('@/assets/images/default_profile.png')}
                             style={{ width: 85, height: 85, marginTop: 70, borderRadius: 50, borderWidth: 3, borderColor: '#FDFDFD' }}
                         />
-                        <Text className="text-primary text-xl font-medium mt-2">{user.name}</Text>
+                        <Text className="text-primary text-xl font-medium mt-2">{user?.displayName}</Text>
                     </View>
                     <Text className="text-primary text-lg font-medium mt-3">Statistics</Text>
                     <Text className="text-primary text-lg font-medium mt-3">Statistics</Text>

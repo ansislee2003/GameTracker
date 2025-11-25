@@ -3,17 +3,25 @@ import './globals.css';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { auth } from "@/FirebaseConfig";
 import {useEffect} from "react";
-import {signInAnonymously} from "@firebase/auth";
+import {onAuthStateChanged, signInAnonymously} from "firebase/auth";
 
 export default function RootLayout() {
+    // sign in user as anon if not logged in
     useEffect(() => {
-        signInAnonymously(auth)
-        .then((user) => {
-            console.log("Signed in anonymously");
-        })
-        .catch((error) => {
-            console.log("Failed to sign in");
-        })
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                try {
+                    const credential = await signInAnonymously(auth);
+                    console.log("Signed in anonymously");
+                } catch (error) {
+                    console.log("Failed to sign in", error);
+                }
+            } else if (!user.isAnonymous) {
+                console.log("Welcome back user");
+            } else {
+                console.log("Anonymous user restored");
+            }
+        });
     }, []);
 
     return (
