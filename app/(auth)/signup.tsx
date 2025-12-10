@@ -14,12 +14,16 @@ import {HelperText, Icon, TextInput as PaperInput} from "react-native-paper";
 import Animated, {FadeIn, FadeOut} from "react-native-reanimated";
 import {useRouter} from "expo-router";
 import {getDownloadURL, ref} from "@firebase/storage";
+import api from "@/api";
+import {signInWithCustomToken} from "firebase/auth";
 
 const secondary = "#3893fa";
 
 export default function Index() {
     const router = useRouter();
 
+    const [username, setUsername] = useState('');
+    const [usernameError, setUsernameError] = useState('');
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
@@ -33,6 +37,7 @@ export default function Index() {
     // validate email, password and confirm password format
     const validate = () => {
         // reset previous error messages
+        setUsernameError('');
         setEmailError('');
         setPasswordError('');
         setConfirmPasswordError('');
@@ -40,6 +45,14 @@ export default function Index() {
 
         let isValid = true;
 
+        if (!username) {
+            setUsernameError('Username cannot be empty.');
+            isValid = false;
+        }
+        else if (!/^(?!.*[._-]{2})[a-z0-9][a-z0-9._-]{1,18}[a-z0-9]$/.test(username)) {
+            setUsernameError('Usernames must be 3–20 characters long, contain only lowercase letters, numbers, dots (.), underscores (_), or dashes (-), start and end with a letter or number, and not have consecutive symbols.');
+            isValid = false;
+        }
         if (!email) {   // check email field format
             setEmailError("Email cannot be empty.");
             isValid = false;
@@ -73,31 +86,21 @@ export default function Index() {
         if (validate()) {
             console.log("Sign up!");
             try {
-                const defaultAvatarRef = ref(storage, 'avatar/default_profile')
-                const defaultAvatarUrl = await getDownloadURL(defaultAvatarRef)
-                const newUserCred = await createUserWithEmailAndPassword(auth, email, password);
-
-                await updateProfile(newUserCred.user, {
-                    displayName: `New_User`,
-                    photoURL: defaultAvatarUrl
-                });
-                router.replace('/verify');
+                api.post('/user/signup', {username: username, email: email, password: password, confirmPassword: confirmPassword})
+                    .then(async res => {
+                        await signInWithCustomToken(auth, res.data.accessToken)
+                            .then((result) => {
+                                router.replace('/verify');
+                            })
+                    })
+                    .catch((error) => {
+                        console.log(error.response.data.error);
+                        setSignupError(error.response.data.error);
+                    })
             }
             catch (error: any) {
                 console.log(error);
-                switch (error.code) {
-                    case 'auth/email-already-in-use':
-                        setSignupError('Email is already in use. Please enter a different email.');
-                        break;
-                    case 'auth/invalid-email':
-                        setSignupError('Invalid email address.');
-                        break;
-                    case 'auth/weak-password':
-                        setSignupError('Password is too weak.');
-                        break;
-                    default:
-                        setSignupError('Sign up failed. Please try again.');
-                }
+                setSignupError(error.message);
             }
         }
     }
@@ -125,6 +128,34 @@ export default function Index() {
                             </Animated.View>
                         )}
 
+                        {/*username input field*/}
+                        <PaperInput
+                            value={username}
+                            onChangeText={(newUsername: string) => {
+                                setUsername(newUsername);
+                                setUsernameError('');
+                                setSignupError('');
+                            }}
+                            label="Username"
+                            mode="outlined"
+                            activeOutlineColor={secondary}
+                            style={{
+                                width: "100%",
+                                height: 50,
+                                backgroundColor: 'transparent',
+                                marginTop: 20
+                            }}
+                            error={!!usernameError}
+                            theme={{ colors: { error: '#FF4C4C' } }}
+                        />
+                        <HelperText
+                            type="error"
+                            visible={!!usernameError}
+                            style={{ color: '#FF4C4C', fontSize: 14, alignSelf: 'flex-start' }}
+                        >
+                            {usernameError}
+                        </HelperText>
+
                         {/*email input field*/}
                         <PaperInput
                             value={email}
@@ -140,7 +171,6 @@ export default function Index() {
                                 width: "100%",
                                 height: 50,
                                 backgroundColor: 'transparent',
-                                marginTop: 20
                             }}
                             error={!!emailError}
                             theme={{ colors: { error: '#FF4C4C' } }}

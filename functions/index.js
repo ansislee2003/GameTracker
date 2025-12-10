@@ -55,6 +55,7 @@ admin.initializeApp({
 });
 const db = admin.firestore();
 const bucket = admin.storage().bucket();
+const auth = admin.auth();
 
 const { defineString } = require('firebase-functions/params');
 const IGDB_CLIENT_ID = defineString('IGDB_CLIENT_ID');
@@ -154,8 +155,8 @@ app.use(async (req, res, next) => {
     }
 
     try {
-        const decodedUser = await admin.auth().verifyIdToken(idToken);
-        req.user = await admin.auth().getUser(decodedUser.uid);
+        const decodedUser = await auth.verifyIdToken(idToken);
+        req.user = await auth.getUser(decodedUser.uid);
         next();
     } catch (error) {
         return res.status(401).send('Not authorized: Invalid token');
@@ -322,6 +323,110 @@ app.post('/getGameById', async (req, res) => {
     })
 })
 
+// new user sign up, creates firebase auth doc, usernames doc, and users doc
+app.post('/user/signup', async (req, res) => {
+    const { username, email, password, confirmPassword } = req.body;
+
+    if (!username) {
+        return res.status(401).json({error: 'Missing username'});
+    }
+    if (!/^(?!.*[._-]{2})[a-z0-9][a-z0-9._-]{1,18}[a-z0-9]$/.test(username)) {
+        return res.status(401).json({error: 'Invalid username.'});
+    }
+    if (!email) {
+        return res.status(401).json({error: 'Missing email'});
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(401).json({error: 'Invalid email.'});
+    }
+    if (!password) {
+        return res.status(401).json({error: 'Missing password'});
+    }
+    if (!confirmPassword) {
+        return res.status(401).json({error: 'Missing confirm password'});
+    }
+    if (confirmPassword !== password) {
+        return res.status(401).json({error: 'Passwords do not match.'});
+    }
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()\-_=+\[\]{};:'",.<>/?|~`]{8,}$/.test(password)) {
+        return res.status(401).json({error: 'Invalid password.'});
+    }
+
+    try {
+        console.log('Creating user...');
+        // create account in firebase auth
+        const newUser = await auth.createUser({
+            email: email,
+            password: password,
+            displayName: username,
+            photoURL: 'https://firebasestorage.googleapis.com/v0/b/mygamelist-3c79d.firebasestorage.app/o/avatar%2Fdefault_profile?alt=media',
+            disabled: true
+        })
+        console.log('Created user');
+        // set handle by creating doc in usernames/[handle], fail if doc exists
+        const usernameRef = db.collection('usernames').doc(username);
+        const userRef = db.collection('users').doc(newUser.uid);
+        await db.runTransaction(async (transaction) => {
+            const handleDoc = await transaction.get(usernameRef);
+
+            // manual rollback if handle taken
+            // uid never collides, no need to check if user doc exists
+            if (handleDoc.exists) {
+                await auth.deleteUser(newUser.uid);
+                throw Object.assign(new Error('Username is not available.'), { name: 'UserError' });
+            }
+
+            // create doc if handle available
+            await transaction.set(usernameRef, {
+                uid: newUser.uid,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            // create user doc
+            await transaction.set(userRef, {
+                status: 'pending'
+            })
+        })
+        console.log('Created user docs');
+        // activate auth account
+        await auth.updateUser(newUser.uid, {
+            disabled: false
+        })
+            .catch(error => {
+                throw Object.assign(new Error('Account created successfully but may take a while before it is activated.'), { name: 'ServerError' });
+            })
+        await userRef.update({
+            status: 'active'
+        })
+        console.log('Activated account');
+        // return auth token
+        const accessToken = await auth.createCustomToken(newUser.uid);
+        return res.status(200).json({accessToken: accessToken});
+    }
+    catch (error) {
+        if (error.code) {
+            switch (error.code) {
+                case 'auth/email-already-exists':
+                    return res.status(401).json({error: 'Email is already in use. Please enter a different email.'});
+                case 'auth/invalid-email':
+                    return res.status(401).json({error: 'Invalid email address.'});
+                case 'auth/weak-password':
+                    return res.status(401).json({error: 'Password is too weak.'});
+                default:
+                    console.error(error);
+                    return res.status(401).json({error: 'Sign up failed. Please try again.'});
+            }
+        }
+        if (error.name === 'UserError') {
+            return res.status(401).json({error: error.message});
+        }
+        else if (error.name === 'ServerError') {
+            return res.status(500).json({error: error.message});
+        }
+        console.error('/user/signup', error)
+        return res.status(500).json({error: 'Failed to create account. Please try again later.'});
+    }
+})
+
 app.post('/user/uploadAvatarByUID', async (req, res) => {
     // if (req.user.isAnonymous || !req.user.emailVerified) {
     if (req.user.isAnonymous) {
@@ -380,7 +485,7 @@ app.post('/user/uploadAvatarByUID', async (req, res) => {
 
                 // update firebase auth with new photoURL
                 const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filepath)}?alt=media&token=${token}`;
-                await admin.auth().updateUser(req.user.uid, {
+                await auth.updateUser(req.user.uid, {
                     photoURL: url
                 })
                 console.log("Check new uploaded url", url)
