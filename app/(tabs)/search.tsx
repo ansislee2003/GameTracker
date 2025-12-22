@@ -60,6 +60,11 @@ export default function Index() {
                 }
                 setSearchGames(prev => prev.concat(response.data));
                 searchOffset.current += response.data.length;
+
+                // stop after loading 100 results
+                if (searchOffset.current >= 100) {
+                    setHasLoadMore(false);
+                }
             }
             setSearchGamesLoading(false);
             setLoadMoreLoading(false);
@@ -185,7 +190,7 @@ export default function Index() {
                                         ItemSeparatorComponent={() => <View style={{height: 10}}/>}
                                         ListFooterComponent={
                                             (hasLoadMore && (searchGames.length > 0 || searchGamesLoading)) ? (
-                                                <ActivityIndicator style={{paddingTop: 20}} size="large" color="#FDBA74"/>
+                                                <ActivityIndicator className="bg-red-500" style={{paddingTop: 20}} size="large" color="#FDBA74"/>
                                             ) : (!hasLoadMore) ? (
                                                 <View className="w-full mt-5 justify-center items-center text-lg">
                                                     <Text style={{ color: "#FDBA74" }}> End of results </Text>

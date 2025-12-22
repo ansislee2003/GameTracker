@@ -1,14 +1,14 @@
-import {ActivityIndicator, ImageBackground, ScrollView, Text, TextInput, TouchableOpacity, View} from "react-native";
+import {ActivityIndicator, ImageBackground, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import {Image} from "expo-image";
 import LinkText from "@/components/LinkText";
-import React, {useEffect, useState} from "react";
-import {onAuthStateChanged, User} from "firebase/auth";
+import React, {useEffect, useRef, useState} from "react";
+import {onAuthStateChanged, updateProfile, User} from "firebase/auth";
 import {auth, db} from "@/FirebaseConfig";
 import {router} from "expo-router";
 import {Icon} from "react-native-paper/src";
 import * as ImagePicker from 'expo-image-picker';
 import api from "@/api";
-import {Avatar, Button, IconButton, Snackbar} from "react-native-paper";
+import {TextInput, Button, IconButton, Snackbar} from "react-native-paper";
 import {fileTypeFromBlob, fileTypeFromBuffer} from "file-type";
 import { collection, query, where, getDocs } from "firebase/firestore"
 
@@ -22,6 +22,7 @@ export default function Index() {
     const [editOverlay, setEditOverlay] = useState(false);
     const [error, setError] = useState("");
     const [showError, setShowError] = useState(false);
+    const inputRef = useRef(null);
 
     useEffect(() => {
         onAuthStateChanged(auth, async () => {
@@ -127,23 +128,56 @@ export default function Index() {
                             </TouchableOpacity>
                         </View>
                         {/*display name*/}
-                        <View className="flex-row">
-                            <Text className="text-primary text-xl font-medium mt-4">{user?.displayName || "New_User"}</Text>
-                            <IconButton
-                                icon="pencil"
-                                size={24}
-                                onPress={async () => {
-                                    setNewDisplayName(user?.displayName || "");
-                                    setEditDisplayName(true);
-                                }}
-                            />
-                            <TextInput
-                                value={newDisplayName}
-                                onChangeText={setNewDisplayName}
-                                onBlur={async () => {
+                        <View className="flex-row items-center h-[25] mt-4">
+                            {!editDisplayName ? (
+                                <>
+                                    <Text className="text-primary text-xl font-medium max-w-[300]">{user?.displayName || "New_User"}</Text>
+                                    <IconButton
+                                        style={{margin: 0, padding: 0, marginLeft: 5, width: 25, height: 25}}
+                                        icon="pencil"
+                                        size={20}
+                                        onPress={async () => {
+                                            setNewDisplayName(user?.displayName || "");
+                                            setEditDisplayName(true);
+                                            setTimeout(() => {
+                                                if (inputRef.current) {
+                                                    inputRef.current.focus();
+                                                }
+                                            },0)
+                                        }}
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    <TextInput
+                                        ref={inputRef}
+                                        mode="outlined"
+                                        value={newDisplayName}
+                                        style={{color: '#ececec', fontSize: 17.1, fontWeight: '500', height: 30, maxWidth: 310}}
+                                        contentStyle={{paddingVertical: 0}}
+                                        theme={{colors: { primary: '#ececec', outline: '#ececec'}}}
+                                        onChangeText={setNewDisplayName}
+                                        maxLength={32}
+                                        onBlur={async () => {
+                                            const name = newDisplayName.trim();
+                                            if (name.length > 0 && name.length <= 32 && auth.currentUser) {
+                                                await updateProfile(auth.currentUser, { displayName: name });
+                                            }
+                                            setEditDisplayName(false);
 
-                                }}
-                            />
+                                        }}
+                                    />
+                                    <IconButton
+                                        style={{margin: 0, padding: 0, marginLeft: 5, width: 25, height: 25}}
+                                        icon="undo"
+                                        size={20}
+                                        onPress={() => {
+                                            setEditDisplayName(false);
+                                            setNewDisplayName(user?.displayName || "");
+                                        }}
+                                    />
+                                </>
+                            )}
                         </View>
                         {/*username handle*/}
                         <View className="flex-row">

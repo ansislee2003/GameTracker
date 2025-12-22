@@ -32,6 +32,8 @@ setGlobalOptions({ maxInstances: 10 });
 // });
 
 const functions = require('firebase-functions');
+const {onDocumentCreated, Change, FirestoreEvent } = require('firebase-functions/v2/firestore');
+const {FieldValue} = require('firebase-admin/firestore');
 const express = require('express');
 const app = express();
 const axios = require('axios');
@@ -76,6 +78,7 @@ const buildIGDBHeaders = async (isUpdate = false) => {
                 'Content-Type': 'text/plain'
             };
 
+            console.log('Updating Headers', IGDB_HEADERS)
             return IGDB_HEADERS;
         }
         else { return IGDB_HEADERS; }
@@ -119,7 +122,7 @@ api.interceptors.response.use(null, async error => {
             await db.collection('oauth').doc('igdb').set({
                 'IGDB_AUTHORIZATION': newOAuth
             })
-            await buildIGDBHeaders();
+            await buildIGDBHeaders(true);
         }
         catch (OAuthRefreshError) {
             console.log('Updating OAuth Failed:', OAuthRefreshError);
@@ -514,5 +517,64 @@ app.post('/user/uploadAvatarByUID', async (req, res) => {
     busboy.end(req.rawBody);
 })
 
+app.post('/game/saveGameByID', async (req, res) => {
+    const validProgress = new Set(['actively_playing', 'retired', 'completed', 'dropped', 'planned_on_playing'])
+    const { gameID, score, progress } = req.body;
+
+    if (!gameID) { return res.status(400).json({ error: 'Missing gameID' }); }
+    if (typeof gameID !== 'string') { return res.status(400).json({ error: 'Invalid gameID' }); }
+    if (!score) { return res.status(400).json({ error: 'Missing game score' }); }
+    if (typeof score !== 'number' && score % 1 === 0 && score > 1 && score <= 10) { return res.status(400).json({ error: 'Invalid game score' }); }
+    if (!progress) { return res.status(400).json({ error: 'Missing game progress' }); }
+    if (!validProgress.has(progress)) { return res.status(400).json({ error: 'Invalid game progress' }); }
+
+    const gameRef = db.collection('savedGames').doc(req.user.uid).collection('games').doc(gameID);
+    try {
+        // save to savedGames/{userId}/games/{gameID}
+        await gameRef.set({
+            score: score,
+            progress: progress
+        })
+    }
+    catch (error) {
+        console.error('/game/saveGameByID:', error);
+        return res.status(500).json({ error: 'Failed to save game' });
+    }
+
+    return res.status(200).send();
+})
+
+app.get('/game/getSavedGames', async (req, res) => {
+    const gameRef = db.collection('savedGames').doc(req.user.uid).collection('games');
+    gameRef.get()
+        .then((snapshot) => {
+            const games = snapshot.docs.map(doc => ({ 'gameID': doc.id, ...doc.data() }));
+            return res.json({games});
+        })
+        .catch((error) => {
+            return res.status(500).json({ error: 'Failed to fetch games' });
+        })
+})
+
 exports.api = functions.https.onRequest(app);
+
+// update total rating number
+// exports.onGameAdded = onDocumentCreated('savedGames/{userId}/games/{gameID}', async (event) => {
+//     const gameID = event.params.gameID;
+//     const game = await db.collection('games').doc(gameID).get();
+//     if (!game.exists) {
+//         await db.collection('games').doc(gameID).create({
+//             total_rating: 0,
+//             total_rating_count: 0,
+//             saved_count: 1,
+//             average_rating: null
+//         })
+//     }
+//     else {
+//         await db.collection('games').doc(gameID).update({
+//             saved_count: FieldValue.increment(1)
+//         })
+//     }
+//         console.log(`Game ${gameID} added for user ${event.params.userId}`);
+// })
 

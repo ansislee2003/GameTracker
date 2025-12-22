@@ -1,11 +1,13 @@
 import {View, Text, ScrollView, ActivityIndicator, ImageBackground} from 'react-native';
 import React, {useEffect, useState} from "react";
 import {useLocalSearchParams} from "expo-router";
-import {Image} from "expo-image";
 import StarIcon from "@/assets/icons/star.svg";
 import Animated from "react-native-reanimated";
 import api from "@/api"
-import {IconButton, Menu, Modal, Portal} from "react-native-paper";
+import {Button, IconButton, Modal, Portal} from "react-native-paper";
+import DropDownPicker from "react-native-dropdown-picker";
+import {auth, db} from "@/FirebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 
 const GameDetails = () => {
     const { id } = useLocalSearchParams();
@@ -16,8 +18,40 @@ const GameDetails = () => {
     const [error, setError] = useState('');
 
     const [modalVisible, setModalVisible] = useState(false);
-    const showModal = () => setModalVisible(true);
+    const showModal = () => {
+        setScore(null);
+        setProgress(null);
+        setModalVisible(true);
+    }
     const hideModal = () => setModalVisible(false);
+
+    // game score dropdown
+    const [openScore, setOpenScore] = useState(false);
+    const [score, setScore] = useState(null);
+    const [scoreOptions, setScoreOptions] = useState([
+        { label: '-', value: -1 },
+        { label: '1', value: 1 },
+        { label: '2', value: 2 },
+        { label: '3', value: 3 },
+        { label: '4', value: 4 },
+        { label: '5', value: 5 },
+        { label: '6', value: 6 },
+        { label: '7', value: 7 },
+        { label: '8', value: 8 },
+        { label: '9', value: 9 },
+        { label: '10', value: 10 }
+    ]);
+
+    // game progress dropdown
+    const [openProgress, setOpenProgress] = useState(false);
+    const [progress, setProgress] = useState(null);
+    const [progressOptions, setProgressOptions] = useState([
+        { label: 'Planned on playing', value: 'planned_on_playing' },
+        { label: 'Actively playing', value: 'actively_playing' },
+        { label: 'Completed', value: 'completed' },
+        { label: 'Dropped', value: 'dropped' },
+        { label: 'Retired', value: 'retired' }
+    ]);
 
     useEffect(() => {
         api.post('/getGameById', {"gameID": id},
@@ -30,11 +64,20 @@ const GameDetails = () => {
         .then(response => {
             setGame(response.data);
             setLoading(false);
-            console.log(response.data)
         })
         .catch(error => {
             setError(error);
         })
+
+        if (auth.currentUser){
+            const gameRef = doc(db, 'savedGames', auth.currentUser.uid, 'games', id);
+            getDoc(gameRef)
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        setSavedGame(true);
+                    }
+                })
+        }
     }, []);
 
     if (!loading) {
@@ -56,11 +99,56 @@ const GameDetails = () => {
                         visible={modalVisible}
                         onDismiss={hideModal}
                     >
-                        <Text className="text-primary text-lg">Testing</Text>
-                        <Text className="text-primary text-lg font-medium mt-4">Rating:</Text>
-                        <Menu>
-
-                        </Menu>
+                        <Text className="text-primary text-lg font-medium">Add to game list</Text>
+                        <Text className="text-primary text-lg font-medium mt-4 mb-2">Score:</Text>
+                        <DropDownPicker
+                            open={openScore}
+                            value={score}
+                            items={scoreOptions}
+                            setOpen={setOpenScore}
+                            setValue={setScore}
+                            setItems={setScoreOptions}
+                            zIndex={3000}
+                            zIndexInverse={1000}
+                            placeholder="-"
+                        />
+                        <Text className="text-primary text-lg font-medium mt-4 mb-2">Progress:</Text>
+                        <DropDownPicker
+                            open={openProgress}
+                            value={progress}
+                            items={progressOptions}
+                            setOpen={setOpenProgress}
+                            setValue={setProgress}
+                            setItems={setProgressOptions}
+                            zIndex={2000}
+                            zIndexInverse={2000}
+                            placeholder="-"
+                        />
+                        <Button
+                            className="mt-5 text-primary"
+                            mode="outlined"
+                            onPress={() => {
+                                // call saveGameById api
+                                api.post('/game/saveGameByID',{
+                                    'gameID': id,
+                                    'score': score,
+                                    'progress': progress
+                                },
+                                {
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                })
+                                    .then(response => {
+                                        hideModal();
+                                    })
+                                    .catch(error => {
+                                        console.log(error.response.data.error);
+                                    })
+                            }}
+                        >
+                            Save
+                        </Button>
                     </Modal>
                 </Portal>
                 <ScrollView>
@@ -79,9 +167,7 @@ const GameDetails = () => {
                                 size={30}
                                 style={{margin: 0, padding: 0, width: 38, height: 38}}
                                 onPress={() => {
-                                    if (!savedGame) {
-                                        showModal();
-                                    }
+                                    showModal();
                                 }}
                             />
                         </View>
