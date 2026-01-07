@@ -546,14 +546,49 @@ app.post('/game/saveGameByID', async (req, res) => {
 
 app.get('/game/getSavedGames', async (req, res) => {
     const gameRef = db.collection('savedGames').doc(req.user.uid).collection('games');
-    gameRef.get()
-        .then((snapshot) => {
-            const games = snapshot.docs.map(doc => ({ 'gameID': doc.id, ...doc.data() }));
-            return res.json({games});
-        })
-        .catch((error) => {
-            return res.status(500).json({ error: 'Failed to fetch games' });
-        })
+    // gameRef.get()
+    //     .then((snapshot) => {
+    //         const games = snapshot.docs.map(doc => ({ 'gameID': doc.id, ...doc.data() }));
+    //         return res.json({games});
+    //     })
+    //     .catch((error) => {
+    //         return res.status(500).json({ error: 'Failed to fetch games' });
+    //     })
+
+    try{
+        const snapshot = await gameRef.get();
+        const games = snapshot.docs.map(doc => ({ 'gameID': doc.id, ...doc.data() }));
+
+        const igdb_headers = await buildIGDBHeaders();
+        const query = `
+            fields name, cover.url;
+            where id = (${games.map(game => game.gameID).join(',')});
+        `;
+
+        const gamesInfo = await api.post(
+            'https://api.igdb.com/v4/games/',
+            query,
+            { headers: igdb_headers }
+        )
+
+        const gamesInfoMap = Object.fromEntries(
+            gamesInfo.data.map((game) => [game.id, game])
+        )
+        console.log("gamesInfo", gamesInfo.data)
+        console.log("gamesInfoMap", gamesInfoMap)
+        const data = games.map(game => ({
+                ...game,
+                cover: gamesInfoMap[game.gameID]?.cover?.url || null,
+                name: gamesInfoMap[game.gameID]?.name || ''
+        }))
+        console.log("data", data)
+
+        return res.json({games: data});
+    }
+    catch (error) {
+        console.error('/game/getSavedGames:', error);
+        return res.status(500).json({ error: 'Failed to fetch games' });
+    }
 })
 
 exports.api = functions.https.onRequest(app);

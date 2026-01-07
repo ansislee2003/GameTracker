@@ -1,10 +1,14 @@
-import {ImageBackground, Text, View} from "react-native";
+import {ImageBackground, Text, View, Image, ScrollView, TouchableOpacity} from "react-native";
 import {auth} from "@/FirebaseConfig";
 import { useFocusEffect } from '@react-navigation/native';
 import {useCallback, useEffect, useState} from "react";
 import api from "@/api";
+import {DataTable} from "react-native-paper";
+import LinkText from "@/components/LinkText";
+import {useRouter} from "expo-router";
 
 export default function Index() {
+    const router = useRouter();
     const user = auth.currentUser;
     const [games, setGames] = useState([]);
 
@@ -13,6 +17,7 @@ export default function Index() {
             api.get('/game/getSavedGames')
                 .then(response => {
                     setGames(response.data.games);
+                    console.log("games:", response.data.games);
                 })
                 .catch(error => {
                     console.log(error.response.data.message);
@@ -27,19 +32,56 @@ export default function Index() {
             resizeMode="cover"
         >
             <View className="flex-1 justify-center items-center" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-                {user ? (
-                    games && games.length > 0 ? (
-                        games.map(game => (
-                            <Text key={game.gameID} className="text-primary">
-                                game: {game.gameID} - score: {game.score} - progress: {game.progress}
-                            </Text>
-                        ))
-                    ) : (
-                        <Text className="text-primary">No games saved</Text>
-                    )
-                ) : (
-                    <Text className="text-primary">Unverified</Text>
-                )}
+                <ScrollView className="mt-10" horizontal showsHorizontalScrollIndicator={true}>
+                <View className="w-[90%]">
+                    <DataTable>
+                        <DataTable.Header>
+                            <DataTable.Title>
+                                <View style={{ width: 115 }} />
+                            </DataTable.Title>
+                            <DataTable.Title style={{ width: 115, paddingLeft: 10 }}>
+                                Name
+                            </DataTable.Title>
+                            <DataTable.Title style={{ width: 75, paddingLeft: 10 }}>
+                                Score
+                            </DataTable.Title>
+                            <DataTable.Title style={{ width: 75, paddingLeft: 10 }}>
+                                Progress
+                            </DataTable.Title>
+                        </DataTable.Header>
+
+                        {games && games.length > 0 ? (
+                            games.map(game => (
+                                <DataTable.Row style={{ height: 160 }}>
+                                    <DataTable.Cell style={{ width: 115, justifyContent: 'center', justifyContent: 'center' }}>
+                                        <Image
+                                            source={game.cover ? { uri: `https:${game.cover.replace('t_thumb', 't_cover_big')}`}
+                                            : require('@/assets/images/image-not-found.png')}
+                                            className="rounded-lg"
+                                            style={{ width: 99, height: 139.5, resizeMode: 'cover', borderRadius: 2 }}
+                                        />
+                                    </DataTable.Cell>
+                                    <DataTable.Cell style={{ width: 115, paddingLeft: 10 }}>
+                                        <TouchableOpacity onPress={() => { router.push(`/games/${game.gameID}`) }}>
+                                            <Text className="text-primary" numberOfLines={4} ellipsizeMode="tail">
+                                                {game.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </DataTable.Cell>
+                                    <DataTable.Cell style={{ width: 75, paddingLeft: 10, justifyContent: 'center' }}>
+                                        {game.score} / 10
+                                    </DataTable.Cell>
+                                    <DataTable.Cell style={{ width: 75, paddingLeft: 10, justifyContent: 'center' }}>
+                                        {game.progress}
+                                    </DataTable.Cell>
+                                </DataTable.Row>
+                            ))
+                        ) : (
+                            <Text className="text-primary">No games saved</Text>
+                        )}
+                    </DataTable>
+                </View>
+                </ScrollView>
             </View>
         </ImageBackground>
     );
