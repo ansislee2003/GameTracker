@@ -5,6 +5,7 @@ import {useState} from "react";
 
 interface Props {
     ref?: RefObject<TextInput | null>;
+    className?: string;
     searchText?: string;
     placeholder: string;
     onPress?: () => void;
@@ -13,9 +14,9 @@ interface Props {
     editable?: boolean;
 }
 
-const SearchBar = ({ref, searchText='', placeholder, onPress, onChangeText, onSubmitEditing, editable=true}: Props) => {
+const SearchBar = ({ref, className, searchText='', placeholder, onPress, onChangeText, onSubmitEditing, editable=true}: Props) => {
     return (
-        <View className="flex-row w-full items-center bg-primary rounded-full px-4 py-3">
+        <View className={"flex-row w-full items-center bg-primary rounded-full px-4 py-3 " + className}>
             <icons.search color="#999999" width={17} height={17}/>
             <TextInput
                 ref={ref}

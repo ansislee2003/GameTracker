@@ -7,6 +7,7 @@ import {
     ActivityIndicator,
     Dimensions,
     TouchableWithoutFeedback, Keyboard, ImageBackground,
+    SafeAreaView,
 } from "react-native";
 import SearchBar from "@/components/SearchBar";
 import React, {useCallback, useEffect, useRef, useState} from "react";
@@ -134,81 +135,90 @@ export default function Index() {
         }, [])
     );
 
-    const screenHeight = Dimensions.get('window').height;
-    const adjustedHeight = screenHeight - 250;
-
     return (
         <ImageBackground
             source={require('@/assets/images/background.png')}
             className="flex-1"
             resizeMode="cover"
         >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-                <View className="flex-1 justify-center items-center" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-                    <View className="flex-1 w-full mt-10 pt-10 px-5">
-                        <SearchBar
-                            ref={searchBarRef}
-                            searchText={searchText}
-                            placeholder="Search"
-                            onChangeText={setSearchText}
-                        />
+            <View className="flex-1 justify-center items-center" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+                <SafeAreaView>
+                    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                        <View className="w-full px-5 pt-5">
+                            <SearchBar
+                                ref={searchBarRef}
+                                searchText={searchText}
+                                placeholder="Search"
+                                onChangeText={setSearchText}
+                            />
 
-                        <Text className="text-primary text-lg font-medium py-3">Searching for: {searchText?searchText:'-'}</Text>
+                            <Text className="text-primary text-lg font-medium py-3">Searching for: {searchText?searchText:'-'}</Text>
+                        </View>
+                    </TouchableWithoutFeedback>
 
-                        <View style={{ height: adjustedHeight }}>
-                            {(searchGames.length > 0 || searchGamesLoading) ? (
-                                <Animated.View
-                                    className="mt-3 w-full"
-                                    entering={FadeInDown.duration(150)}
-                                    exiting={FadeOutUp.duration(150)}
-                                >
-                                    <FlatList
-                                        data={searchGames}
-                                        renderItem={({item}) => (
+                    <View className="flex-1 mb-5">
+                        {(searchGames.length > 0 || searchGamesLoading) ? (
+                            <Animated.View
+                                className="flex-1 mt-3 w-full"
+                                entering={FadeInDown.duration(150)}
+                                exiting={FadeOutUp.duration(150)}
+                            >
+                                <FlatList
+                                    className="flex-1"
+                                    data={searchGames}
+                                    renderItem={({item}) => (
+                                        <View className="flex-1 w-[50%] justify-center items-center">
                                             <GameCard
                                                 {...item}
                                             />
-                                        )}
-                                        keyExtractor={(item) => item.id.toString()}
-                                        scrollEnabled={true}
-                                        onEndReached={
-                                            () => {
-                                                if (hasLoadMore && searchGames.length < loadMoreThreshold && searchGames.length > 0) {
-                                                    setLoadMoreLoading(true);
-                                                }
+                                        </View>
+                                    )}
+                                    keyExtractor={(item) => item.id.toString()}
+                                    scrollEnabled={true}
+                                    onEndReached={
+                                        () => {
+                                            if (hasLoadMore && searchGames.length < loadMoreThreshold && searchGames.length > 0) {
+                                                setLoadMoreLoading(true);
                                             }
                                         }
-                                        onEndReachedThreshold={0.1}
-                                        numColumns={2}
-                                        contentContainerStyle={{justifyContent: 'center'}}
-                                        columnWrapperStyle={{
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            paddingHorizontal: 25,
-                                            gap: 15
-                                        }}
-                                        ItemSeparatorComponent={() => <View style={{height: 10}}/>}
-                                        ListFooterComponent={
-                                            (hasLoadMore && (searchGames.length > 0 || searchGamesLoading)) ? (
-                                                <ActivityIndicator style={{paddingTop: 20}} size="large" color="#FDBA74"/>
-                                            ) : (!hasLoadMore) ? (
-                                                <View className="w-full mt-5 justify-center items-center text-lg">
-                                                    <Text style={{ color: "#FDBA74" }}> End of results </Text>
-                                                </View>
-                                            ) : null
-                                        }
-                                    />
-                                </Animated.View>
-                            ) : isEmptySearch && (
+                                    }
+                                    onEndReachedThreshold={0.1}
+                                    numColumns={2}
+                                    contentContainerStyle={{justifyContent: 'center'}}
+                                    columnWrapperStyle={{
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        paddingHorizontal: 10,
+                                        paddingVertical: 5
+                                    }}
+                                    ItemSeparatorComponent={() => <View style={{height: 10}}/>}
+                                    ListFooterComponent={
+                                        (hasLoadMore && (searchGames.length > 0 || searchGamesLoading)) ? (
+                                            <ActivityIndicator style={{paddingTop: 20}} size="large" color="#FDBA74"/>
+                                        ) : (!hasLoadMore) ? (
+                                            <View className="w-full mt-5 justify-center items-center text-lg">
+                                                <Text style={{ color: "#FDBA74" }}> End of results </Text>
+                                            </View>
+                                        ) : null
+                                    }
+                                />
+                            </Animated.View>
+                        ) : isEmptySearch ? (
+                            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
                                 <View key="no-results" className="flex-1 w-full items-center justify-center">
                                     <Icon size={100} source="file-search-outline"/>
                                     <Text className="text-primary text-lg mt-3">{`No results found for "${currSearchText.current}"`}</Text>
                                 </View>
-                            )}
-                        </View>
+                            </TouchableWithoutFeedback>
+                        ) : (
+                            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                                <View className="flex-1"/>
+                            </TouchableWithoutFeedback>
+                        )}
                     </View>
-                </View>
-            </TouchableWithoutFeedback>
+                </SafeAreaView>
+
+            </View>
         </ImageBackground>
     );
 }
