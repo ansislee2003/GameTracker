@@ -190,7 +190,7 @@ export default function Index() {
                                         ItemSeparatorComponent={() => <View style={{height: 10}}/>}
                                         ListFooterComponent={
                                             (hasLoadMore && (searchGames.length > 0 || searchGamesLoading)) ? (
-                                                <ActivityIndicator className="bg-red-500" style={{paddingTop: 20}} size="large" color="#FDBA74"/>
+                                                <ActivityIndicator style={{paddingTop: 20}} size="large" color="#FDBA74"/>
                                             ) : (!hasLoadMore) ? (
                                                 <View className="w-full mt-5 justify-center items-center text-lg">
                                                     <Text style={{ color: "#FDBA74" }}> End of results </Text>

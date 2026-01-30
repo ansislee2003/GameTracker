@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import './globals.css';
-import { Provider as PaperProvider } from 'react-native-paper';
+import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 import { auth } from "@/FirebaseConfig";
 import {useEffect} from "react";
 import {onAuthStateChanged, signInAnonymously} from "firebase/auth";
@@ -43,10 +43,11 @@ export default function RootLayout() {
               <Stack.Screen
                   name="games/[id]"
                   options={{
-                      headerTransparent: true,
+                      headerTransparent: false,
                       headerTitle: '',
                       headerShadowVisible: false,
                       headerBackButtonDisplayMode: 'minimal',
+                      headerStyle: {backgroundColor: 'rgba(255,255,255,0)'},
                   }}
               />
 
