@@ -1,9 +1,9 @@
-import {ActivityIndicator, ImageBackground, ScrollView, Text, TouchableOpacity, View} from "react-native";
+import {ActivityIndicator, ImageBackground, SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
 import {Image} from "expo-image";
 import LinkText from "@/components/LinkText";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useContext, useEffect, useLayoutEffect, useRef, useState} from "react";
 import {onAuthStateChanged, updateProfile, User} from "firebase/auth";
-import {auth, db} from "@/FirebaseConfig";
+import {db} from "@/FirebaseConfig";
 import {router} from "expo-router";
 import {Icon} from "react-native-paper/src";
 import * as ImagePicker from 'expo-image-picker';
@@ -11,9 +11,10 @@ import api from "@/api";
 import {TextInput, Button, IconButton, Snackbar} from "react-native-paper";
 import {fileTypeFromBlob, fileTypeFromBuffer} from "file-type";
 import { collection, query, where, getDocs } from "firebase/firestore"
+import {AuthContext} from "@/app/context/AuthContext";
 
 export default function Index() {
-    const [user, setUser] = useState<User | null>(null);
+    const auth = useContext(AuthContext);
     const [username, setUsername] = useState("");
     const [newDisplayName, setNewDisplayName] = useState<string>("");
     const [editDisplayName, setEditDisplayName] = useState<boolean>(false);
@@ -24,32 +25,15 @@ export default function Index() {
     const [showError, setShowError] = useState(false);
     const inputRef = useRef(null);
 
-    useEffect(() => {
-        onAuthStateChanged(auth, async () => {
-            if (auth.currentUser) {
-                if (auth.currentUser.isAnonymous) {
-                    router.replace("/login");
-                }
-                else {
-                    const usernameQuery = query(
-                        collection(db, "usernames"),
-                        where("uid", "==", auth.currentUser.uid)
-                    );
-                    const usernameDoc = await getDocs(usernameQuery);
-                    setUser(auth.currentUser);
-                    setUsername(usernameDoc.docs[0].id);
-                }
-            }
-        });
-    }, []);
-
-    useEffect(() => {
-        console.log("User age changed:", user?.photoURL);
-    }, [user?.photoURL]);
+    useLayoutEffect(() => {   // redirect to login page if no auth
+        console.log(auth)
+        if (!auth || !auth.user || auth.user.isAnonymous) {
+            router.replace("/login");
+        }
+    }, [auth]);
 
     const updateAvatar = async () => {
-        const user = auth.currentUser;
-        if (user && !user.isAnonymous) {
+        if (auth && auth.user && !auth.user.isAnonymous) {
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],
                 allowsEditing: true,
@@ -69,14 +53,13 @@ export default function Index() {
                     formData.append("image", {
                         uri: asset.uri,
                         type: type.mime,
-                        name: `${user.uid}.${type.ext}`,
+                        name: `${auth.user.uid}.${type.ext}`,
                     } as any);
 
                     api.post('/user/uploadAvatarByUID', formData)
                         .then(async (res) => {
                             setAvatarVisible(false);        // unmount to update image
-                            await user.reload();
-                            setUser(auth.currentUser);
+                            await auth.update();
                             setAvatarVisible(true);
                         })
                         .catch((err) => {
@@ -117,7 +100,7 @@ export default function Index() {
                             >
                                 {avatarVisible ? (
                                     <Image
-                                        source={ user?.photoURL }
+                                        source={ auth.user?.photoURL }
                                         style={{ width: 90, height: 90, opacity: avatarLoaded ? 0 : 1 }}
                                         contentFit="cover"
                                         transition={500}
@@ -131,13 +114,13 @@ export default function Index() {
                         <View className="flex-row items-center h-[25] mt-4">
                             {!editDisplayName ? (
                                 <>
-                                    <Text className="text-primary text-xl font-medium max-w-[300]">{user?.displayName || "New_User"}</Text>
+                                    <Text className="text-primary text-xl font-medium max-w-[300]">{auth.user?.displayName || "New_User"}</Text>
                                     <IconButton
                                         style={{margin: 0, padding: 0, marginLeft: 5, width: 25, height: 25}}
                                         icon="pencil"
                                         size={20}
                                         onPress={async () => {
-                                            setNewDisplayName(user?.displayName || "");
+                                            setNewDisplayName(auth.user?.displayName || "");
                                             setEditDisplayName(true);
                                             setTimeout(() => {
                                                 if (inputRef.current) {
@@ -160,8 +143,8 @@ export default function Index() {
                                         maxLength={32}
                                         onBlur={async () => {
                                             const name = newDisplayName.trim();
-                                            if (name.length > 0 && name.length <= 32 && auth.currentUser) {
-                                                await updateProfile(auth.currentUser, { displayName: name });
+                                            if (name.length > 0 && name.length <= 32 && auth.user) {
+                                                await updateProfile(auth.user, { displayName: name });
                                             }
                                             setEditDisplayName(false);
 
@@ -173,7 +156,7 @@ export default function Index() {
                                         size={20}
                                         onPress={() => {
                                             setEditDisplayName(false);
-                                            setNewDisplayName(user?.displayName || "");
+                                            setNewDisplayName(auth.user?.displayName || "");
                                         }}
                                     />
                                 </>
@@ -181,7 +164,7 @@ export default function Index() {
                         </View>
                         {/*username handle*/}
                         <View className="flex-row">
-                            <Text className="text-gray-300 text-xl mt-1">{`@${username}` || ""}</Text>
+                            <Text className="text-gray-300 text-xl mt-1">{auth.handle ? `@${auth.handle}` : ""}</Text>
                         </View>
                     </View>
                     <Text className="text-primary text-lg font-medium mt-3">Statistics</Text>

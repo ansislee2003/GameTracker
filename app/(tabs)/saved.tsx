@@ -6,10 +6,12 @@ import api from "@/api";
 import {DataTable} from "react-native-paper";
 import LinkText from "@/components/LinkText";
 import {useRouter} from "expo-router";
+import {useContext} from "react";
+import {AuthContext} from "@/app/context/AuthContext";
 
 export default function Index() {
     const router = useRouter();
-    const user = auth.currentUser;
+    const user = useContext(AuthContext);
     const [games, setGames] = useState([]);
 
     useFocusEffect(
