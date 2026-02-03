@@ -1,8 +1,8 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {View, Text, ImageBackground, TouchableOpacity} from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter, useSegments } from 'expo-router';
 import { icons } from '@/assets/icons';
-import { Image } from "expo-image";
+import {useAuth} from "@/app/context/AuthContext";
 
 const TabIcon = ({ focused, icon }: any) => {
     const IconComponent = icons[icon as keyof typeof icons];
@@ -24,6 +24,20 @@ const TabIcon = ({ focused, icon }: any) => {
 }
 
 const _Layout = () => {
+    const {isAuthenticated, loading} = useAuth();
+    const segments = useSegments();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (loading) { return; }
+
+        if (segments.length > 1 && segments[1] == "profile") {
+            if (!isAuthenticated) {
+                router.replace("/login");
+            }
+        }
+    } ,[isAuthenticated, loading, segments])
+
     return (
         <Tabs
             screenOptions={{

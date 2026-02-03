@@ -1,16 +1,16 @@
-import { auth } from "@/FirebaseConfig";
-import {signInWithEmailAndPassword, createUserWithEmailAndPassword, getAuth} from "firebase/auth";
-import React, { useState } from "react";
+import React, {useContext, useLayoutEffect, useState} from "react";
 import {View, Text, TextInput, Pressable, TouchableHighlight, Keyboard, TouchableWithoutFeedback, ImageBackground} from "react-native";
 import LinkText from "@/components/LinkText";
 import {HelperText, TextInput as PaperInput, Icon, Surface} from 'react-native-paper';
 import Animated, {BounceIn, BounceOut, FadeIn, FadeInRight, FadeOut, FadeOutLeft} from "react-native-reanimated";
 import {useRouter} from "expo-router";
+import {useAuth} from "@/app/context/AuthContext";
 
 const primary = "#424242";
 const secondary = "#3893fa";
 
 export default function Index() {
+    const auth = useAuth();
     const router = useRouter();
 
     const [email, setEmail] = useState('');
@@ -49,7 +49,7 @@ export default function Index() {
     const submitLogin = async () => {
         if (validate()) {
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                await auth.login(email, password);
                 console.log("logged in");
                 router.replace('/');
             }

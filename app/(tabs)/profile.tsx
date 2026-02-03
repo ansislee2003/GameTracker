@@ -4,17 +4,19 @@ import LinkText from "@/components/LinkText";
 import React, {useContext, useEffect, useLayoutEffect, useRef, useState} from "react";
 import {onAuthStateChanged, updateProfile, User} from "firebase/auth";
 import {db} from "@/FirebaseConfig";
-import {router} from "expo-router";
+import {useRouter} from "expo-router";
 import {Icon} from "react-native-paper/src";
 import * as ImagePicker from 'expo-image-picker';
 import api from "@/api";
 import {TextInput, Button, IconButton, Snackbar} from "react-native-paper";
 import {fileTypeFromBlob, fileTypeFromBuffer} from "file-type";
 import { collection, query, where, getDocs } from "firebase/firestore"
-import {AuthContext} from "@/app/context/AuthContext";
+import {AuthContext, useAuth} from "@/app/context/AuthContext";
 
 export default function Index() {
-    const auth = useContext(AuthContext);
+    const auth = useAuth();
+    const router = useRouter();
+
     const [username, setUsername] = useState("");
     const [newDisplayName, setNewDisplayName] = useState<string>("");
     const [editDisplayName, setEditDisplayName] = useState<boolean>(false);
@@ -24,13 +26,6 @@ export default function Index() {
     const [error, setError] = useState("");
     const [showError, setShowError] = useState(false);
     const inputRef = useRef(null);
-
-    useLayoutEffect(() => {   // redirect to login page if no auth
-        console.log(auth)
-        if (!auth || !auth.user || auth.user.isAnonymous) {
-            router.replace("/login");
-        }
-    }, [auth]);
 
     const updateAvatar = async () => {
         if (auth && auth.user && !auth.user.isAnonymous) {
